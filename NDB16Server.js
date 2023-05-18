@@ -26,6 +26,7 @@ app.use(function (err, req, res, next) {
 
 app.listen(port, () => {
     addDate()
+    fillRandomSeats(theatreList)
     console.log(`Node app listening on port ${port}!`)
 })
 
@@ -125,7 +126,7 @@ app.post('/login', function (req, res) {
     if (!user) {
         return res.status(401).json({ message: 'Invalid username or password' });
     }
-    const token = jwt.sign({ sub: user.u_id }, 'your_jwt_secret', { expiresIn: '1h' });
+    const token = jwt.sign({ sub: user.u_id }, 'your_jwt_secret', { expiresIn: '7d' });
     const requser = { u_id: user.u_id, name: user.u_name, email: user.u_email, mobile: user.mobile, favTheatresList: user.favTheatresList, bookings: user.bookings }
     res.json({ requser, token });
 });
@@ -186,7 +187,7 @@ app.post('/savebooking/:id', passport.authenticate('jwt', { session: false }), f
     const { id } = req.params;
     const body = req.body;
 
-    // console.log(id, body);
+    addBookedSeats(body);
 
     try {
         const index = users.findIndex((user) => user.u_id === id);
@@ -231,7 +232,6 @@ app.post('/savebooking/:id', passport.authenticate('jwt', { session: false }), f
 // MOVIE HANDLING
 
 app.get('/movielist', (req, res) => {
-    // console.log(JSON.stringify(req.query));
     let filterMovieList = moviesList;
     const { languages, genres, format, titlesearchstr } = req.query;
 
@@ -264,32 +264,18 @@ app.get('/movielist', (req, res) => {
             return lowerMovieTitle.includes(lowerTitlestr);
         });
     }
-
-    // console.log(filterMovieList.map(item => item.title));
     filterMovieList = sortMoviesByReleaseDate(filterMovieList);
     res.json(filterMovieList);
 })
 
 app.get('/buytickets', (req, res) => {
-    const { location, moviename } = req.query;
-
-    // console.log(req.query);
-
-    // const filterTheatreList = theatreList.filter(object => {
-    //     if (object.locations.includes(location))
-    //         return object;
-    // })
-
     res.json(theatreList);
 })
 
 // FAVOURITE THEATRE
 
-app.post('/saveFavTheatreList/:id', passport.authenticate('jwt', { session: false }), function (req, res) {
+app.get('/getFavTheatreList/:id', passport.authenticate('jwt', { session: false }), function (req, res) {
     const { id } = req.params;
-    const body = req.body;
-
-    // console.log(body);
 
     const index = users.findIndex((u1) => u1.u_id === id);
 
@@ -297,11 +283,105 @@ app.post('/saveFavTheatreList/:id', passport.authenticate('jwt', { session: fals
         return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    const updateduser = { ...users[index], favTheatresList: body.favTheatresList };
+    const favTheatresList = users[index].favTheatresList;
+    res.json({ favTheatresList });
 
-    users[index] = updateduser;
-    // console.log(users);
+})
 
-    res.status(200).json({ msg: "Update Successful" });
+app.post('/saveFavTheatreList/:id', passport.authenticate('jwt', { session: false }), function (req, res) {
+    const { id } = req.params;
+    const body = req.body;
+
+    const index = users.findIndex((user) => user.u_id === id);
+
+    if (index === -1) {
+        return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (req.user.u_id !== id) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    users[index].favTheatresList = body.favTheatresList;
+
+    res.status(200).json({ msg: 'Update Successful' });
 });
 
+function addBookedSeats(body) {
+    const { selTheatre, selSeats, selSlot } = body;
+    // console.log(selSeats);
+
+    const theatre = theatreList.find((theater) => theater.id === selTheatre.id);
+
+    if (theatre) {
+        const slotObj = theatre.showtiming.find((show) => show[selSlot]);
+
+        selSeats.forEach((seatData) => {
+            const seatKey = `${seatData.row}${seatData.col}`;
+            if (!slotObj[selSlot].bookedSeats.includes(seatKey)) {
+                slotObj[selSlot].bookedSeats.push(seatKey);
+            } else {
+                console.log(`Seat Already Bookded. ${seatKey}`);
+            }
+        });
+        // console.log(slotObj);
+
+    } else {
+        console.log('Invalid theater ID provided!');
+    }
+    // console.log('Successfully Added new Booked Seats');
+}
+
+app.get('/getlayout/:id', (req, res) => {
+    const { id } = req.params;
+    const theater = theatreList.find((th) => th.id === +id);
+    res.json(theater);
+})
+
+function generateFilledSeats(seatsLayout) {
+    const bookedSeats = [];
+    let totalSeats = 0;
+    Object.keys(seatsLayout).forEach((sl) => {
+        const seatData = seatsLayout[sl].split(':');
+        const [lastRow, startRow] = seatData[0].split('-');
+        const startNum = +seatData[1].substring(0, 1);
+        const lastNum = +seatData[1].substring(seatData[1].length - 2);
+
+        const currRowSeats = (lastNum - startNum + 1) * (lastRow.charCodeAt(0) - startRow.charCodeAt(0) + 1);
+
+        totalSeats += currRowSeats;
+
+        const seatPercentage = Math.floor(Math.random() * (60 - 20)) + 20;
+        const seatCount = Math.ceil((seatPercentage / 100) * currRowSeats);
+
+        const selectedSeats = [];
+
+        while (selectedSeats.length < seatCount) {
+            const randomRow = Math.floor(Math.random() * (lastRow.charCodeAt(0) - startRow.charCodeAt(0) + 1)) + startRow.charCodeAt(0);
+            const randomCol = Math.floor(Math.random() * (lastNum - startNum + 1)) + startNum;
+            const seat = `${String.fromCharCode(randomRow)}${randomCol}`;
+
+            if (!selectedSeats.includes(seat)) {
+                selectedSeats.push(seat);
+            }
+        }
+
+        bookedSeats.push(...selectedSeats);
+
+    })
+
+    return bookedSeats;
+}
+
+function fillRandomSeats(theatreList) {
+    for (let theatre of theatreList) {
+        for (let show of theatre.showtiming) {
+            const slotKey = Object.keys(show)[0];
+            const bookedSeats = show[slotKey].bookedSeats;
+
+            const selectedSeats = generateFilledSeats(theatre.seatsLayout)
+
+            bookedSeats.push(...selectedSeats);
+        }
+    }
+}
