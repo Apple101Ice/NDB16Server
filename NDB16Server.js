@@ -26,9 +26,11 @@ app.use(function (err, req, res, next) {
 
 app.listen(port, () => {
     addDate()
-    fillRandomSeats(theatreList)
+    // fillRandomSeats(theatreList)
     console.log(`Node app listening on port ${port}!`)
 })
+
+const generatedMovieSeats = [];
 
 const { moviesList } = require('./MoviesList')
 const { theatreList } = require('./TheatreList')
@@ -373,9 +375,30 @@ function generateFilledSeats(seatsLayout) {
     return bookedSeats;
 }
 
-function fillRandomSeats(theatreList) {
-    for (let theatre of theatreList) {
+app.get('/gettheatrelayout/:thid/:mvid/:mdate', (req, res) => {
+    // check or generate
+
+    console.log(req.params);
+
+    const { thid, mvid, mdate } = req.params;
+    const theaterMS = generatedMovieSeats.find((mth) => mth.mvid === mvid && mth.thid === thid && mth.mdate === mdate);
+
+    if (theaterMS)
+        res.json(theaterMS.theater);
+    else {
+        const newthmvdata = g_thmdata(thid);
+        generatedMovieSeats.push({ thid: thid, mvid: mvid, mdate: mdate, theatre: newthmvdata });
+        res.json(newthmvdata);
+    }
+    console.log(generatedMovieSeats);
+
+})
+
+function g_thmdata(thid) {
+    const theatre = theatreList.find((th) => th.id === +thid);
+    if (theatre) {
         for (let show of theatre.showtiming) {
+
             const slotKey = Object.keys(show)[0];
             const bookedSeats = show[slotKey].bookedSeats;
 
@@ -383,5 +406,9 @@ function fillRandomSeats(theatreList) {
 
             bookedSeats.push(...selectedSeats);
         }
+        return theatre;
+    }
+    else {
+        return {}
     }
 }

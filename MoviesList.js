@@ -31,17 +31,17 @@ const moviesList = [
     },
     {
         id: 1003,
-        title: "Mystery of Journey",
+        title: "One Way",
         releaseDate: "01",
-        genres: ["Horror", "Romance"],
+        genres: ["Action", "Drama"],
         description:
-            "After forsaking his family and religion, a husband finds his wife is demoniacally possessed.",
+            "The Story throw's light on Prarabdh Karma(The Arrow has left the bow) the evil deeds done two decades back is haunting Ranadheer and the love triangle of Pranit which can have Unfortunate consequences.",
         imgLink:
-            "https://m.media-amazon.com/images/M/MV5BNjY1YzUxZGYtN2YyMy00NzE2LWJiZWItZDEyYjY4YWMzNGFkXkEyXkFqcGdeQXVyOTUwODQ5MjI@._V1_.jpg",
-        director: "Mangesh Saindane",
-        stars: ["Noor Ali", "Shawar Ali", "Noor Ansari", "Karishama Chavan"],
+            "https://m.media-amazon.com/images/M/MV5BZWNmZmQxNTYtYmQ4Ni00ZmUxLWEyZmYtZjUzZjkyODFjNDdlXkEyXkFqcGdeQXVyMTU3Nzg5ODIw._V1_.jpg",
+        director: "Sachin Kumar Funde",
+        stars: ["Pravesh Singh", "Deeptesh Das", "Payal Khurana", "Man Singh Rajput"],
         languages: ["Hindi", "Telugu", "Malayalam"],
-        format: ["2D", "IMAX 2D", "IMAX 3D"]
+        format: ["2D", "IMAX 3D"]
     },
     {
         id: 1004,
@@ -101,7 +101,7 @@ const moviesList = [
     },
     {
         id: 1008,
-        title: " Veera Simha Reddy",
+        title: "Veera Simha Reddy",
         releaseDate: "01",
         genres: ["Action", "Drama"],
         description:
