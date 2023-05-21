@@ -1,6 +1,6 @@
 const theatreList = [
     {
-        id: 001,
+        id: 9001,
         name: "PVR Cinemas",
         locations: ["Mumbai", "Delhi", "Bangalore", "Chennai"],
         address: "Multiple locations",
@@ -24,7 +24,7 @@ const theatreList = [
         website: "https://www.pvrcinemas.com/",
     },
     {
-        id: 002,
+        id: 9002,
         name: "INOX Cinemas",
         locations: ["Hyderabad", "Kolkata", "Ahmedabad", "Pune"],
         address: "Multiple locations",
@@ -47,7 +47,7 @@ const theatreList = [
         website: "https://www.inoxmovies.com/",
     },
     {
-        id: 003,
+        id: 9003,
         name: "Cinepolis",
         locations: ["Gurgaon", "Jaipur", "Chandigarh", "Noida"],
         address: "Multiple locations",
@@ -75,7 +75,7 @@ const theatreList = [
         website: "https://www.cinepolisindia.com/",
     },
     {
-        id: 004,
+        id: 9004,
         name: "SPI Cinemas",
         locations: ["Chennai", "Coimbatore", "Trivandrum", "Bangalore"],
         address: "Multiple locations",
@@ -102,7 +102,7 @@ const theatreList = [
         website: "https://www.spicinemas.in/",
     },
     {
-        id: 005,
+        id: 9005,
         name: "Mirag Cinemas",
         locations: ["Chennai", "Coimbatore", "Trivandrum", "Bangalore"],
         address: "Multiple locations",

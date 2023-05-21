@@ -310,13 +310,14 @@ app.post('/saveFavTheatreList/:id', passport.authenticate('jwt', { session: fals
 });
 
 function addBookedSeats(body) {
-    const { selTheatre, selSeats, selSlot } = body;
-    // console.log(selSeats);
+    const { selTheatre, selSeats, selSlot, selMovie, selDate } = body;
 
-    const theatre = theatreList.find((theater) => theater.id === selTheatre.id);
+    const theatreshowtiming = generatedMovieSeats.find((mth) => mth.mvid === selMovie.id.toString() && mth.thid === selTheatre.id.toString() && mth.mdate === selDate.date) || [];
 
-    if (theatre) {
-        const slotObj = theatre.showtiming.find((show) => show[selSlot]);
+    if (theatreshowtiming) {
+
+        const slotObj = theatreshowtiming.theatrebs.find((show) => show[selSlot]);
+
 
         selSeats.forEach((seatData) => {
             const seatKey = `${seatData.row}${seatData.col}`;
@@ -340,21 +341,24 @@ app.get('/getlayout/:id', (req, res) => {
     res.json(theater);
 })
 
-function generateFilledSeats(seatsLayout) {
+function generateFilledSeats(seatsLayout, minRange, maxRange) {
+    // console.log('function called', minRange, maxRange);
     const bookedSeats = [];
     let totalSeats = 0;
+
     Object.keys(seatsLayout).forEach((sl) => {
         const seatData = seatsLayout[sl].split(':');
         const [lastRow, startRow] = seatData[0].split('-');
+        // const [startNum, lastNum] = seatData[1].split(',').map(num => +num);
         const startNum = +seatData[1].substring(0, 1);
         const lastNum = +seatData[1].substring(seatData[1].length - 2);
 
         const currRowSeats = (lastNum - startNum + 1) * (lastRow.charCodeAt(0) - startRow.charCodeAt(0) + 1);
-
         totalSeats += currRowSeats;
 
-        const seatPercentage = Math.floor(Math.random() * (60 - 20)) + 20;
+        const seatPercentage = Math.floor(Math.random() * (maxRange - minRange + 1)) + minRange;
         const seatCount = Math.ceil((seatPercentage / 100) * currRowSeats);
+        // console.log(seatData, startRow, lastRow, startNum, lastNum, currRowSeats, seatPercentage);
 
         const selectedSeats = [];
 
@@ -367,48 +371,51 @@ function generateFilledSeats(seatsLayout) {
                 selectedSeats.push(seat);
             }
         }
-
+        // console.log(selectedSeats);
         bookedSeats.push(...selectedSeats);
-
-    })
+    });
 
     return bookedSeats;
 }
 
+
 app.get('/gettheatrelayout/:thid/:mvid/:mdate', (req, res) => {
     // check or generate
 
-    console.log(req.params);
+    // console.log(req.params);
 
     const { thid, mvid, mdate } = req.params;
     const theaterMS = generatedMovieSeats.find((mth) => mth.mvid === mvid && mth.thid === thid && mth.mdate === mdate);
 
-    if (theaterMS)
-        res.json(theaterMS.theater);
+    if (theaterMS) {
+        // console.log("already present");
+        res.json(theaterMS.theatrebs);
+    }
     else {
+        // console.log("new generate");
         const newthmvdata = g_thmdata(thid);
-        generatedMovieSeats.push({ thid: thid, mvid: mvid, mdate: mdate, theatre: newthmvdata });
+        generatedMovieSeats.push({ thid: thid, mvid: mvid, mdate: mdate, theatrebs: newthmvdata });
         res.json(newthmvdata);
     }
-    console.log(generatedMovieSeats);
+    // console.log(generatedMovieSeats);
 
 })
 
 function g_thmdata(thid) {
-    const theatre = theatreList.find((th) => th.id === +thid);
-    if (theatre) {
-        for (let show of theatre.showtiming) {
-
+    const theatre = { ...theatreList.find((th) => th.id === +thid) };
+    const theatreshowtiming = JSON.parse(JSON.stringify(theatre.showtiming));
+    // console.log(theatreshowtiming.toString());
+    const maxRange = Math.floor(Math.random() * (95 - 20 + 1)) + 20;
+    const minRange = 10;
+    if (theatreshowtiming) {
+        for (let show of theatreshowtiming) {
             const slotKey = Object.keys(show)[0];
-            const bookedSeats = show[slotKey].bookedSeats;
-
-            const selectedSeats = generateFilledSeats(theatre.seatsLayout)
-
-            bookedSeats.push(...selectedSeats);
+            show[slotKey].bookedSeats = [];
+            const selectedSeats = generateFilledSeats(theatre.seatsLayout, minRange, maxRange);
+            show[slotKey].bookedSeats = selectedSeats;
         }
-        return theatre;
-    }
-    else {
-        return {}
+        return theatreshowtiming;
+    } else {
+        return {};
     }
 }
